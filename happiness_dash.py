@@ -2,7 +2,15 @@ import plotly.express as px
 import pandas as pd
 from dash import Dash, dcc, html, Input, Output, callback
 
-df = pd.read_csv(r'C:\Users\matte\OneDrive\Desktop\GitHub\data\happiness\clear_data.csv')
+df = pd.read_csv(r'C:\Users\matte\OneDrive\Desktop\GitHub\jupyter_storytelling\Data\clear_data.csv')
+for i in list(df['Year'].unique()):
+    dfy = df.loc[df['Year']==i,'Score':'Family'] 
+    wdata = {}
+    for c in dfy.columns.to_list():
+        wdata[f'{c}'] = dfy[f'{c}'].mean()
+    wdata['Year'] = i
+    wdata['Country'] = 'World'
+    df = df._append(wdata, ignore_index=True)
 
 colors = {
     'background': '#111111',
@@ -86,14 +94,9 @@ fig_chh.update_layout(
     )
 # —————————
 
-# —————————LINE
-df_line = df.loc[df['Country'].isin(['Italy', 'France', 'Germany']), ['Country','Score', 'Year']]
-fig_line = px.line(df_line, x='Year', y='Score', color='Country')
-fig_line.update_xaxes(tickvals=list(df['Year'].unique()), ticktext=list(df['Year'].unique()))
-# —————————
-
 # —————————SCATTER 
 df_scat = df.loc[df['Year'] == 2019, ['Country','Generosity', 'Rank', 'Economy strength', 'Score']]
+df_scat = df_scat[df_scat['Country'] != 'World']
 df_scat['Rank2'] = df_scat['Rank'].max() - df_scat['Rank'] + 1
 
 fig_scat = px.scatter(df_scat, x='Generosity', y='Economy strength', size='Rank2',
@@ -107,6 +110,7 @@ fig_scat.update_traces(
 
 # —————————SCATTER 2
 df_scat2 = df.loc[df['Year'] == 2019, ['Country','Life Expectancy', 'Rank', 'Trust in the gov', 'Score']]
+df_scat2 = df_scat2[df_scat2['Country'] != 'World']
 df_scat2['Rank2'] = df_scat2['Rank'].max() - df_scat2['Rank'] + 1
 
 fig_scat2 = px.scatter(df_scat2, x='Life Expectancy', y='Trust in the gov', size='Rank2',
@@ -154,7 +158,6 @@ app.layout = html.Div([
     
         dcc.Graph(
             id='line-fig',
-            figure=fig_line
         ),
         html.Br(),
     
@@ -189,7 +192,7 @@ app.layout = html.Div([
         ),
 
         dcc.RadioItems(radio_eco, value='Generosity',
-                     inline=True, id='radio_gov'
+                     inline=True, id='radio_eco'
         ),
 
         html.H1(children='',
@@ -231,7 +234,25 @@ app.layout = html.Div([
 
     ], style={'padding': 10, 'flex': 1})
 ], style={'display': 'flex', 'flexDirection': 'row'})
-    
+
+@callback(
+    Output(component_id='line-fig', component_property='figure'),
+    Input(component_id='drop_line', component_property='value')
+)
+def update_fig(drop_line_value):
+
+    # —————————LINE
+    if type(drop_line_value) != 'list':
+        listd = []
+        listd.append(drop_line_value)
+        drop_line_value = listd
+
+    fig_line = px.line(df.loc[df['Country'].isin(drop_line_value),:],
+                       x='Year', y='Score', color='Country')
+    fig_line.update_xaxes(tickvals=list(df['Year'].unique()), ticktext=list(df['Year'].unique()))
+    # —————————
+
+    return fig_line
 
 if __name__ == '__main__':
     app.run(debug=True)
