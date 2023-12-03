@@ -9,6 +9,83 @@ colors = {
     'text': '#7FDBFF'
 }
 
+#—————————CHORO FAMILY
+df_chf = df.loc[df['Year']==2015, ['ISO','Family','Country']]
+
+fig_chf = px.choropleth(
+    df_chf,
+    locations='ISO',
+    color='Family',
+    hover_name='Country',
+    color_continuous_scale='Emrld_r',
+    labels={'Family': 'Family'},
+)
+
+fig_chf.update_layout(
+    width=720,
+    height=400,
+    geo=dict(
+        showframe=False,
+        showcoastlines=False,
+        projection_type='equirectangular'
+    ),
+    title={
+        'text': '<b>Family Score by Country</b>',
+        'y':0.9,
+        'x':0.5,
+        'xanchor': 'center',
+        'yanchor': 'top',
+    },
+    title_font_color='#525252',
+    title_font_size=33,
+    font=dict(
+        family='Heebo', 
+        size=18, 
+        color='#525252'
+    ),
+    margin={"r": 0, "t": 50, "l": 10, "b": 0}
+    )
+# —————————
+
+#—————————CHORO HAPPY
+df_chh = df.loc[df['Year']==2015, ['ISO','Score','Country']]
+
+fig_chh = px.choropleth(
+    df_chh,
+    locations='ISO',
+    color='Score',
+    hover_name='Country',
+    color_continuous_scale='Oryel_r',
+    labels={'Score': 'Happiness'},
+    title='Happiness Choropleth Map',
+)
+
+fig_chh.update_layout(
+    width=720,
+    height=400,
+    geo=dict(
+        showframe=False,
+        showcoastlines=False,
+        projection_type='equirectangular'
+    ),
+    title={
+        'text': '<b>Happiness Score by Country</b>',
+        'y':0.9,
+        'x':0.5,
+        'xanchor': 'center',
+        'yanchor': 'top',
+    },
+    title_font_color='#525252',
+    title_font_size=33,
+    font=dict(
+        family='Heebo', 
+        size=18, 
+        color='#525252'
+    ),
+    margin={"r": 0, "t": 50, "l": 10, "b": 0}
+    )
+# —————————
+
 # —————————LINE
 df_line = df.loc[df['Country'].isin(['Italy', 'France', 'Germany']), ['Country','Score', 'Year']]
 fig_line = px.line(df_line, x='Year', y='Score', color='Country')
@@ -17,7 +94,9 @@ fig_line.update_xaxes(tickvals=list(df['Year'].unique()), ticktext=list(df['Year
 
 # —————————SCATTER 
 df_scat = df.loc[df['Year'] == 2019, ['Country','Generosity', 'Rank', 'Economy strength', 'Score']]
-fig_scat = px.scatter(df_scat, x='Generosity', y='Economy strength', size='Score',
+df_scat['Rank2'] = df_scat['Rank'].max() - df_scat['Rank'] + 1
+
+fig_scat = px.scatter(df_scat, x='Generosity', y='Economy strength', size='Rank2',
                  color='Rank', hover_data=['Country', 'Rank'], color_continuous_scale= px.colors.sequential.Plasma_r,
                  labels={'Rank': '<b>Happiness <br>Rank<b>', 'Economy strength':'Economy Strength'})
 
@@ -26,15 +105,39 @@ fig_scat.update_traces(
 )
 # —————————
 
+# —————————SCATTER 2
+df_scat2 = df.loc[df['Year'] == 2019, ['Country','Life Expectancy', 'Rank', 'Trust in the gov', 'Score']]
+df_scat2['Rank2'] = df_scat2['Rank'].max() - df_scat2['Rank'] + 1
+
+fig_scat2 = px.scatter(df_scat2, x='Life Expectancy', y='Trust in the gov', size='Rank2',
+                 color='Rank', color_continuous_scale= px.colors.sequential.Plasma_r,
+                 hover_data=['Country', 'Rank'],
+                 labels={'Rank': '<b>Happiness <br>Rank<b>', 'Trust in the gov':'Trust in The Government'}
+                 )
+
+fig_scat2.update_traces(
+   hovertemplate='<b>Country:</b> %{customdata[0]}<br><b>Happiness rank:</b> %{customdata[1]}<extra></extra>'
+)
+# —————————
+
+drop_line = list(df['Country'].unique())
+drop_line.append('World')
+
+radio_gov = ['Life Expectancy','Perceived freedom', 'Score', 'Economy strength']
+
+radio_eco = ['Generosity', 'Score', 'Perceived freedom']
+
+
 app = Dash(__name__)
 
 app.layout = html.Div([
-    
+
+# —————————COLUMN 1
     html.Div(children=[
     
         html.H1(children='Just a Title',
                 style={
-                    'textAlign':'center',
+                    'textAlign':'Left',
                     'color':colors['text']
                 }
         ),
@@ -43,30 +146,91 @@ app.layout = html.Div([
                 Maybe 2 paragraphs.
                 ''',
                 style={
-                    'textAlign':'center',
+                    'textAlign':'Left',
                     'color':colors['text']
                 }
         ),
+        html.Br(),
+    
         dcc.Graph(
             id='line-fig',
             figure=fig_line
         ),
         html.Br(),
-
+    
         dcc.Graph(
             id='scat-fig',
             figure=fig_scat
         ),
-    ],style={'backgroundColor': colors['background']}),
+    ],style={'backgroundColor': colors['background'],
+             'padding': 10, 'flex': 1}),
 
+# —————————COLUMN 2
     html.Div(children=[
 
-        dcc.Graph(
-        id='scat-fig',
-        figure=fig_scat
+        html.H2('Happiness Over Time'
+
         ),
-    ])
-])
+
+        dcc.Dropdown(drop_line, value='World',
+                     multi=True, id='drop_line'
+        ),
+
+        html.H2('Trust in The Gov vs.'
+
+        ),
+
+        dcc.RadioItems(radio_gov, value='Life Expectancy',
+                     inline=True, id='radio_gov'
+        ),
+
+        html.H2('Economy Strength vs.'
+
+        ),
+
+        dcc.RadioItems(radio_eco, value='Generosity',
+                     inline=True, id='radio_gov'
+        ),
+
+        html.H1(children='',
+                style={
+                    'textAlign':'Left',
+                    'color':colors['text']
+                }
+        ),
+        
+        html.Div(children='''
+                
+                ''',
+                style={
+                    'textAlign':'Left',
+                    'color':colors['text']
+                }
+        ),
+        html.Br(),
+        html.Br(),
+        
+        dcc.Graph(
+        id='scat2-fig',
+        figure=fig_scat2
+        ),
+        html.Br(),
+    
+        dcc.Graph(
+            id='chf-fig',
+            figure=fig_chf
+        ),
+
+        html.Br(),
+        
+        dcc.Graph(
+        id='chh-fig',
+        figure=fig_chh
+        ),
+        html.Br(),
+
+    ], style={'padding': 10, 'flex': 1})
+], style={'display': 'flex', 'flexDirection': 'row'})
     
 
 if __name__ == '__main__':
