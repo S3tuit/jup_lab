@@ -1,0 +1,12 @@
+# Define the conda python environment
+name: py_dsa
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9
+  - numpy
+  - scipy
+  - networkx
+  - pip
+    
