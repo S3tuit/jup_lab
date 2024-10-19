@@ -9,4 +9,7 @@ dependencies:
   - scipy
   - networkx
   - pip
+  - matplotlib
+  - seaborn
+  - pandas
     
