@@ -13,4 +13,6 @@ dependencies:
   - seaborn
   - pandas
   - nltk
+  - geopandas
+  - fiona=1.9.6
     
